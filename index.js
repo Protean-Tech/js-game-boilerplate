@@ -1,5 +1,5 @@
 var express = require('express');
-var game = require('./game.js');
+var game = require('./server.js');
 var app = express();
 var http = require('http').Server(app);
 
