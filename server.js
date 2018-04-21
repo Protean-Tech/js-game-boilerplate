@@ -170,6 +170,7 @@ module.exports.Server = function(http, port, path) {
 		}
 
 		player.on('message', function incoming(message) {
+			options_box.
 			player.state.response = "";
 			console.log(message)
 
@@ -188,18 +189,21 @@ module.exports.Server = function(http, port, path) {
 			}
 			else if (typeof(message.command) === 'string') {
 				// accept commands here
-				var cmd = message.command.toLowerCase();
+				var cmd = message.command.trim().toLowerCase();
 				switch (cmd) {
 					case 'north':
 					case 'south':
 					case 'west':
 					case 'east':
 					{ // Player has moved
-						var move = directions[cmd];
-						if (player.state.possible_moves.indexOf(move) > -1) {
-							player.state.coord[0] += direction_vecs[0];
-							player.state.coord[1] += direction_vecs[1];
-
+						// console.log('moving');
+						var move = cmd;
+						// console.log(player.state.possible_moves);
+						var move_idx = directions.indexOf(move);
+						// console.log(move_idx);
+						if (move_idx > -1) {
+							player.state.coord[0] += direction_vecs[move_idx][0];
+							player.state.coord[1] += direction_vecs[move_idx][1];
 							player.state.direction = move;
 						}
 					}
@@ -219,6 +223,8 @@ module.exports.Server = function(http, port, path) {
 				}
 			}
 
+			console.log(player.state);
+			refresh_whole_room(player.state.coord);
 		});
 
 		player.on('disconnect', function() {

@@ -24,20 +24,46 @@ function loop(){
 
 }
 
+function dir_from_heading(heading) {
+	var reltative = [];
+	switch (heading) {
+		case 'north':
+			return {'west': 'left', 'east':'right', 'north':'forward', 'south': 'back'};
+		case 'south':
+			return {'east': 'left', 'west':'right', 'south':'forward', 'north': 'back'};
+		case 'west':
+			return {'south': 'left',  'north':'right', 'west':'forward', 'east': 'back'};
+		case 'east':
+			return {'north': 'left',  'south':'right', 'east':'forward', 'west': 'back'};
+	}
+}
+
 function start(){
-	options_box = document.getElementById('options_box');
 	command_box = document.getElementById('command_box');
 	$G.init(loop, 'canvas').gfx.canvas.init();
 
 	socket = io();
+	var dir_table = {};
 
 	socket.on('message', function(data) {
+		command_box.placeholder = '';
+
 		switch (data.type) {
 			case 'state':
 			{
 				player_state = data;
 				if (data.response) {
-					options_box.innerText = data.response;
+					command_box.placeholder = data.response;
+				}
+
+				if (player_state.health > 0) {
+					var rel_dirs = dir_from_heading(player_state.direction);
+
+					player_state.possible_moves.forEach(function(move) {
+						if (move in rel_dirs) {
+							dir_table[rel_dirs[move]] = move;
+						}
+					})
 				}
 			}
 			break;
@@ -48,7 +74,12 @@ function start(){
 
 	command_box.addEventListener('keypress', function(e) {
 		if (e.keyCode == 13 && player_state) {
-			player_state.command = command_box.value.trim();
+			var cmd = player_state.command = command_box.value.trim();
+
+			if (cmd in dir_table) {
+				cmd = player_state.command = dir_table[cmd]
+			}
+
 			command_box.value = '';
 
 			socket.send(player_state);
