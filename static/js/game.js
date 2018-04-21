@@ -4,6 +4,7 @@ var lastTouchPos;
 var ctx;
 var paused = true;
 var time = 0;
+var socket = null;
 
 $G.assets.images("imgs/").load([], function(){
 	start();
@@ -22,6 +23,12 @@ function loop(){
 
 function start(){
 	$G.init(loop, 'canvas').gfx.canvas.init();
+
+	socket = io();
+
+	socket.on('message', function(data) {
+		console.log(data);
+	});
 
 	lastTouchPos = $V([$G.canvas.width / 2, $G.canvas.height / 2]);
 
