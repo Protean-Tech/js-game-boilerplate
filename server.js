@@ -127,6 +127,19 @@ module.exports.Server = function(http, port, path) {
 		}
 	}
 
+	function broadcast_scoreboard() {
+		player_list = []
+		for (var id in players) {
+			player_list.push(players[id].shallow_state());
+		}
+
+		player_list.sort(function(a, b) {
+			return (b.kills - b.deaths) - (a.kills - a.deaths);
+		});
+
+		broadcast(new Event('scoreboard', player_list));
+	}
+
 	io.on('connection', function connection(player) {
 		// get an unused random id
 		do {
@@ -176,6 +189,7 @@ module.exports.Server = function(http, port, path) {
 			player.state.health = 3;
 
 			refresh_whole_room(player.state.coord);
+			player.send(new Event('respawned'));
 		}
 
 		player.damage = function(amount, killer) {
@@ -201,7 +215,10 @@ module.exports.Server = function(http, port, path) {
 			player.state.room_live_occupants = room_live_occupants(player.state.coord, player.player_id);
 			player.state.room_dead_occupants = room_dead_occupants(player.state.coord, player.player_id);
 			player.state.possible_moves = level.possible_moves(coord);
-			player.state.room_state = level[coord[0]][coord[1]];
+
+			if (!coord.sameAs([-1, -1])) {
+				player.state.room_state = level[coord[0]][coord[1]];
+			}
 
 			player.send(player.state);
 		}
@@ -215,9 +232,16 @@ module.exports.Server = function(http, port, path) {
 				var proposed_name = message.command.toLowerCase();
 				console.log(proposed_name);
 				if (proposed_name.isAlpha()){
-					player.state.name = proposed_name;
-					player.spawn();
-					broadcast(new Event('joined', player.state.name + ' has joined the game'));
+
+					if (proposed_name.length != 7) {
+						player.state.response = "Please enter a 7 character long name!";
+					}
+					else{
+						player.state.name = proposed_name;
+						player.spawn();
+						broadcast(new Event('joined', player.state.name + ' has joined the game'));
+						broadcast_scoreboard();
+					}
 				}
 				else {
 					player.state.response = "Please enter a different name, letters only";
@@ -257,8 +281,9 @@ module.exports.Server = function(http, port, path) {
 							if (cmd == occupant.name) {
 								player.send(new Event('damaged', occupant.id));
 								if (players[occupant.id].damage(1, player.state)) {
-									broadcast(new Event('killed', player.state.name + ' killed ' + occupant.name));
 									player.state.kills += 1;
+									broadcast(new Event('killed', player.state.name + ' killed ' + occupant.name));
+									broadcast_scoreboard();
 									player.refresh_room();
 								}
 							}
@@ -278,6 +303,7 @@ module.exports.Server = function(http, port, path) {
 			var coord = player.state.coord;
 			delete players[player.player_id];
 
+			broadcast_scoreboard();
 			refresh_whole_room(coord);
 		});
 

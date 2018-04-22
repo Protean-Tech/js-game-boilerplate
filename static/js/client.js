@@ -14,6 +14,8 @@ var player_shoot = false;
 var level_sprite = null;
 var enemy_sprite = null;
 
+var scoreboard = [];
+
 var dir_table = {};
 
 var enemy_sprites = {};
@@ -33,12 +35,20 @@ var sprite_files = [
 	'BadGuy_fade.png',
 	'junk_0.png',
 	'junk_1.png',
-	'junk_2.png'
+	'junk_2.png',
+	'junk_3.png',
+	'junk_4.png',
+	'junk_5.png',
+	'junk_6.png',
+	'junk_7.png',
+	'junk_8.png',
+	'junk_9.png'
 ];
 
 $G.assets.images("imgs/").load(sprite_files, function(){
 	start();
 });
+
 
 function Player(state) {
 	var t = this;
@@ -114,7 +124,7 @@ function loop(){
 			}
 
 			var state = player_state.room_state;
-			for (var i = 3; i--;) {
+			for (var i = 10; i--;) {
 				var img = assets.images['junk_' + i + '.png'];
 				if (state & 0x01) {
 					level_sprite.draw(img, inv_aspect, 0, 0);
@@ -225,14 +235,32 @@ function start(){
 			}
 			break;
 			case 'damaged':
-			{
 				player_shoot = true;
-			}
-			break;
+				break;
 			case 'died':
-			{
 				command_box.placeholder = 'Ready? Type "respawn"!';
+				$('#scoreboard').show();
+				break;
+			case 'respawned':
+				$('#scoreboard').hide();
+				break;
+			case 'scoreboard':
+			{
+				scores = data.message;
+				var score_list = $('#scores');
+				score_list.html('');
+
+				for (var i = 0; i < scores.length; ++i) {
+					var score = scores[i];
+					var score_row = $('<tr></tr>');
+					score_row.append($('<td></td>').text(score.name))
+					         .append($('<td></td>').text(score.kills))
+					         .append($('<td></td>').text(score.deaths));
+
+					score_list.append(score_row);
+				}
 			}
+
 		}
 
 		console.log(data);

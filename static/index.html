@@ -6,13 +6,29 @@
 <title>le game</title>
 <link rel="stylesheet" type="text/css" href="css/style.css">
 <script src="/socket.io/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+		integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E="
+		crossorigin="anonymous"></script>
 <script src="js/g.js"></script>
 <script src="js/client.js"></script>
+
 </head>
 
 <body>
+
 <canvas id="canvas" width="100%" height="100%">
 </canvas>
+
+<table id="scoreboard" style="display: none;">
+<thead>
+	<tr>
+		<th>PLAYER</th><th>KILLS</th><th>DEATHS</th>
+	</tr>
+</thead>
+<tbody id="scores">
+</tbody>
+</table>
+
 <!-- <div>
 <section id="left" class="direction third">LFT</section>
 <section id="forward" class="direction third">FWD</section>
