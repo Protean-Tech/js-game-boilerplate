@@ -255,7 +255,11 @@ module.exports.Server = function(http, port, path) {
 		player.on('disconnect', function() {
 			console.log('disconnect');
 			broadcast(new Event('quit', player.state.name + ' has quit the game'));
+
+			var coord = player.state.coord;
 			delete players[player.player_id];
+
+			refresh_whole_room(coord);
 		});
 
 		players[player.player_id] = player;
