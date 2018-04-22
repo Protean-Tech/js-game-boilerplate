@@ -170,7 +170,6 @@ module.exports.Server = function(http, port, path) {
 		}
 
 		player.on('message', function incoming(message) {
-			options_box.
 			player.state.response = "";
 			console.log(message)
 
