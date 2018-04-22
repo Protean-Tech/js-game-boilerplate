@@ -191,7 +191,11 @@ var $G = {
 			t._sounds = [];
 			t.Volume = 1.0;
 
-			for(var i = size; i--;) t._sounds.push(new Audio(url));
+			for(var i = size; i--;) {
+				var snd = new Audio(url);
+				snd.load();
+				t._sounds.push(snd);
+			}
 
 			t.loop = function(value){
 				t._sounds[t._last].loop = value;

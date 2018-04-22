@@ -1,5 +1,12 @@
 var fs = require('fs');
 
+const KILLS_TO_WIN = 1;
+
+function Event(type, message) {
+	this.type = type;
+	this.message = message;
+}
+
 Array.prototype.pick = function() {
 	return this[Math.floor(Math.random() * this.length)];
 }
@@ -74,10 +81,6 @@ function Level(path) {
 	return map;
 }
 
-function Event(type, message) {
-	this.type = type;
-	this.message = message;
-}
 
 module.exports.Server = function(http, port, path) {
 
@@ -113,7 +116,6 @@ module.exports.Server = function(http, port, path) {
 
 	function refresh_whole_room(coord) {
 		for (var id in players) {
-			console.log(id);
 			players[id].refresh_room();
 		}
 	}
@@ -162,6 +164,7 @@ module.exports.Server = function(http, port, path) {
 			kills: 0,
 			deaths: 0,
 			direction: null,
+			typing: '',
 			possible_moves: [],
 			room_state: 0,
 			room_live_occupants: [],
@@ -170,7 +173,10 @@ module.exports.Server = function(http, port, path) {
 		};
 
 		player.reset = function() {
-			this.kills = this.deaths = 0;
+			player.state.kills = 0;
+			player.state.deaths = 0;
+			player.state.command = '';
+			player.state.typing = '';
 			this.spawn();
 		}
 
@@ -183,7 +189,8 @@ module.exports.Server = function(http, port, path) {
 				name: player.state.name,
 				kills: player.state.kills,
 				deaths: player.state.deaths,
-				direction: player.state.direction
+				direction: player.state.direction,
+				typing: player.state.typing
 			};
 		}
 
@@ -195,7 +202,7 @@ module.exports.Server = function(http, port, path) {
 			}
 
 			player.state.coord = coord;
-			console.log(player.state.coord);
+			player.state.typing = '';
 			player.state.direction = directions.pick();
 			player.state.health = 3;
 
@@ -236,12 +243,13 @@ module.exports.Server = function(http, port, path) {
 
 		player.on('message', function incoming(message) {
 			player.state.response = "";
+			player.state.typing = message.typing;
 			console.log(message)
 
 			if (player.state.name == null && typeof(message.command) === 'string') {
 				// Player has set their name, get read to spawn them
 				var proposed_name = message.command.toLowerCase();
-				console.log(proposed_name);
+
 				if (proposed_name.isAlpha()){
 
 					if (proposed_name.length != 7) {
@@ -272,11 +280,9 @@ module.exports.Server = function(http, port, path) {
 					case 'west':
 					case 'east':
 					{ // Player has moved
-						// console.log('moving');
 						var move = cmd;
 
 						var move_idx = directions.indexOf(move);
-						// console.log(move_idx);
 						if (move_idx > -1 && move == player.state.direction) {
 							player.state.coord[0] += direction_vecs[move_idx][0];
 							player.state.coord[1] += direction_vecs[move_idx][1];
@@ -288,10 +294,8 @@ module.exports.Server = function(http, port, path) {
 					}
 						break;
 					default:
-						console.log('shooting');
 						// check to see if they typed any character names
 						room_live_occupants(player.state.coord).forEach(function(occupant) {
-							console.log(occupant);
 							if (cmd == occupant.name) {
 								player.send(new Event('damaged', occupant.id));
 								if (players[occupant.id].damage(1, player.state)) {
@@ -300,7 +304,7 @@ module.exports.Server = function(http, port, path) {
 									broadcast(new Event('killed', player.state.name + ' killed ' + occupant.name));
 									broadcast_scoreboard();
 
-									if (player.state.kills >= 1) {
+									if (player.state.kills >= KILLS_TO_WIN) {
 										broadcast(new Event('winner', player.shallow_state()));
 
 										setTimeout(function() {
@@ -321,7 +325,6 @@ module.exports.Server = function(http, port, path) {
 		});
 
 		player.on('disconnect', function() {
-			console.log('disconnect');
 			broadcast(new Event('quit', player.state.name + ' has quit the game'));
 
 			var coord = player.state.coord;

@@ -70,18 +70,23 @@ function Player(state) {
 
 			if (t.sprite.atEnd()) return;
 
-			ctx.font = '10px Arial';
+			ctx.save();
+			ctx.transVec([28 + x, 24]);
+			t.sprite.draw(assets.images['BadGuy_fade.png'], inv_aspect, t.state.health > 0 ? 0 : 0.05, 0);
+			ctx.restore();
+
+			ctx.font = '10px monospace';
 			ctx.fillStyle   = '#0F0';
 			ctx.strokeStyle = '#000';
 			ctx.save();
 			ctx.transVec([49 + x, 24]);
 			ctx.strokeText(t.state.name, 1, 1);
 			ctx.fillText(t.state.name, 1, 1);
-			ctx.restore();
 
-			ctx.save();
-			ctx.transVec([28 + x, 24]);
-			t.sprite.draw(assets.images['BadGuy_fade.png'], inv_aspect, t.state.health > 0 ? 0 : 0.05, 0);
+			ctx.fillStyle   = '#F00';
+			ctx.transVec([0, 50]);
+			ctx.strokeText(t.state.typing, 1, 1);
+			ctx.fillText(t.state.typing, 1, 1);
 			ctx.restore();
 		}
 	};
@@ -282,16 +287,21 @@ function start(){
 	});
 
 	command_box.addEventListener('keypress', function(e) {
+		var cmd = command_box.value.trim();
+
+		player_state.typing = cmd + e.key + '_';
+
 		if (e.keyCode == 13 && player_state) {
-			var cmd = player_state.command = command_box.value.trim();
+			player_state.command = cmd;
 
 			if (cmd in dir_table) {
 				cmd = player_state.command = dir_table[cmd]
 			}
 
 			command_box.value = '';
-
-			socket.send(player_state);
+			player_state.typing = '';
 		}
+
+		socket.send(player_state);
 	});
 }
