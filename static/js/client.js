@@ -18,6 +18,8 @@ var dir_table = {};
 
 var enemy_sprites = {};
 
+var theme_song = null;
+
 var img_for_dir = {
 	'lft': 'wall_door_left.png',
 	'rht': 'wall_door_right.png',
@@ -44,6 +46,9 @@ var sprite_files = [
 ];
 
 $G.assets.images("imgs/").load(sprite_files, function(){
+	theme_song = new $G.audio.soundBatch('/sound/song.ogg', 1);
+	theme_song.loop(true);
+	theme_song.play();
 	start();
 });
 
