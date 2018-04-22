@@ -4,6 +4,15 @@ Array.prototype.pick = function() {
 	return this[Math.floor(Math.random() * this.length)];
 }
 
+Array.prototype.sameAs = function(arr) {
+	if (this.length != arr.length) return false;
+	for(var i = this.length; i--;) {
+		if (this[i] != arr[i]) return false;
+	}
+
+	return true;
+}
+
 String.prototype.isAlpha = function () {
 	let alpha = 'abcdefghijklmnopqrstuvwxyz';
 
@@ -16,7 +25,7 @@ String.prototype.isAlpha = function () {
 	return true;
 };
 
-var directions = [ 'north', 'south', 'east', 'west'];
+var directions = ['north', 'south', 'east', 'west'];
 var direction_vecs = [[-1,0],[1,0], [0,1], [0,-1]];
 
 function Level(path) {
@@ -81,8 +90,9 @@ module.exports.Server = function(http, port, path) {
 	function room_live_occupants(coord) {
 		var occupants = [];
 		for (var id in players) {
-			if (players[id].state.health > 0) continue;
-			occupants.push(players[id].state);
+			if (players[id].state.health <= 0) continue;
+			if (!players[id].state.coord.sameAs(coord)) continue;
+			occupants.push(players[id].shallow_state());
 		}
 
 		return occupants;
@@ -91,8 +101,9 @@ module.exports.Server = function(http, port, path) {
 	function room_dead_occupants(coord) {
 		var occupants = [];
 		for (var id in players) {
-			if (players[id].state.health <= 0) continue;
-			occupants.push(players[id].state);
+			if (players[id].state.health > 0) continue;
+			if (!players[id].state.coord.sameAs(coord)) continue;
+			occupants.push(players[id].shallow_state());
 		}
 
 		return occupants;
@@ -136,6 +147,19 @@ module.exports.Server = function(http, port, path) {
 			response: "Enter your name to join."
 		};
 
+		player.shallow_state = function() {
+			return {
+				type: 'state',
+				id: player.player_id,
+				coord: player.state.coord,
+				health: player.state.health,
+				name: player.state.name,
+				kills: player.state.kills,
+				deaths: player.state.deaths,
+				direction: player.state.direction
+			};
+		}
+
 		player.spawn = function() {
 			player.state.coord = level.room_coords.pick();
 			console.log(player.state.coord);
@@ -162,8 +186,8 @@ module.exports.Server = function(http, port, path) {
 		}
 
 		player.refresh_room = function() {
-			// player.state.room_live_occupants = room_live_occupants(player.state.coord);
-			// player.state.room_dead_occupants = room_dead_occupants(player.state.coord);
+			player.state.room_live_occupants = room_live_occupants(player.state.coord);
+			player.state.room_dead_occupants = room_dead_occupants(player.state.coord);
 			player.state.possible_moves = level.possible_moves(player.state.coord);
 
 			player.send(player.state);
