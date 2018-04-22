@@ -90,6 +90,14 @@ module.exports.Server = function(http, port, path) {
 
 	console.log('server started');
 
+	function name_in_use(name) {
+		for (var id in players) {
+			if (players[id].state.name == name) return true;
+		}
+
+		return false;
+	}
+
 	function room_live_occupants(coord, exclude_id) {
 		var occupants = [];
 		for (var id in players) {
@@ -144,6 +152,7 @@ module.exports.Server = function(http, port, path) {
 
 	function restart() {
 		for (var id in players) {
+			if (players[id].state.name == null) continue;
 			players[id].reset();
 		}
 	}
@@ -255,6 +264,9 @@ module.exports.Server = function(http, port, path) {
 					if (proposed_name.length != 7) {
 						player.state.response = "Please enter a 7 character long name!";
 					}
+					if (name_in_use(proposed_name)) {
+						player.state.response = "Name '" + proposed_name + "' is taken!";
+					}
 					else{
 						player.state.name = proposed_name;
 						player.spawn();
@@ -296,7 +308,7 @@ module.exports.Server = function(http, port, path) {
 					default:
 						// check to see if they typed any character names
 						room_live_occupants(player.state.coord).forEach(function(occupant) {
-							if (cmd == occupant.name) {
+							if (cmd == occupant.name && cmd != player.state.name) {
 								player.send(new Event('damaged', occupant.id));
 								if (players[occupant.id].damage(1, player.state)) {
 									player.state.kills += 1;
