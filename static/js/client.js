@@ -34,6 +34,34 @@ $G.assets.images("imgs/").load(sprite_files, function(){
 	start();
 });
 
+function Player(state) {
+	var t = this;
+
+	t.sprite = new $G.animation.sprite(0, 0, 50, 67, 8, 5);
+
+	t.draw = function() {
+		with($G) {
+			var x = state.id / 500;
+			var ctx = gfx.context;
+			var aspect = gfx.aspect();
+			var inv_aspect = 1 / aspect;
+
+			ctx.font = '10px Arial';
+			ctx.fillStyle   = '#0F0';
+			ctx.strokeStyle = '#000';
+			ctx.save();
+			ctx.transVec([49 + x, 24]);
+			ctx.strokeText(state.name, 1, 1);
+			ctx.fillText(state.name, 1, 1);
+			ctx.restore();
+
+			ctx.save();
+			ctx.transVec([28 + x, 24]);
+			t.sprite.draw(assets.images['BadGuy_fade.png'], inv_aspect, 0, 0);
+			ctx.restore();
+		}
+	};
+}
 
 function loop(){
 	var dt = $G.timer.tick();
@@ -47,50 +75,47 @@ function loop(){
 
 		ctx.save();
 		ctx.transVec([0, gfx.aspect() * 30 - 30]);
-		level_sprite.draw(assets.images['Level.png'], inv_aspect, 0, 0);
+		level_sprite.draw(assets.images['Level.png'], inv_aspect * 2, 0, 0);
 
 		for (var dir in dir_table) {
 			var img = img_for_dir[dir];
 			if (img) {
-				level_sprite.draw(assets.images[img], inv_aspect, 0, 0);
+				level_sprite.draw(assets.images[img], inv_aspect * 2, 0, 0);
 			}
 		}
 		ctx.restore();
-
-		if (player_state)
-		for (var i = player_state.room_live_occupants.length; i--;) {
-			ctx.save();
-			ctx.transVec([15, 4]);
-			enemy_sprite.draw(assets.images['BadGuy_fade.png'], 1, 0, 0);
-			ctx.restore();
-		}
-
-		ctx.save();
-		ctx.transVec([15 * inv_aspect, 4 + Math.cos(time * 2)]);
-		player_hand_sprite.draw(assets.images['Player_sheet.png'], 1, 0, 0);
-		ctx.restore();
-
-		dir_labels = {
-			'lft': { text:'LFT', pos: [8, 12] },
-			'fwd': { text:'FWD', pos: [30, 5] },
-			'rht': { text:'RHT', pos: [50, 12] },
-			'bck': { text:'BCK', pos: [30, 50] },
-		};
 
 		ctx.fillStyle   = '#0F0';
-		ctx.textAlign = 'center';
-		ctx.strokeStyle = 'black';
 
-		for (var dir in dir_table) {
-			label = dir_labels[dir];
-			if (dir_labels[dir]) {
-				ctx.save();
-				ctx.transVec(label.pos);
-				ctx.fillText(label.text, 1, aspect);
-				ctx.restore();
+		if (player_state && player_state.health > 0)
+		{
+			for (var i = player_state.room_live_occupants.length; i--;) {
+				var enemy = player_state.room_live_occupants[i];
+				(new Player(enemy)).draw();
+			}
+
+			ctx.save();
+			ctx.transVec([30 * inv_aspect, 8 + Math.cos(time * 2)]);
+			player_hand_sprite.draw(assets.images['Player_sheet.png'], 2, 0, 0);
+			ctx.restore();
+
+			dir_labels = {
+				'lft': { text:'LFT', pos: [16, 24] },
+				'fwd': { text:'FWD', pos: [60, 10] },
+				'rht': { text:'RHT', pos: [100, 24] },
+				'bck': { text:'BCK', pos: [60, 100] },
+			};
+
+			for (var dir in dir_table) {
+				label = dir_labels[dir];
+				if (dir_labels[dir]) {
+					ctx.save();
+					ctx.transVec(label.pos);
+					ctx.fillText(label.text, 1, aspect);
+					ctx.restore();
+				}
 			}
 		}
-
 	}
 }
 
@@ -117,9 +142,12 @@ function start(){
 		this.translate(v[0], v[1]);
 	};
 
+	$G.gfx.context.textAlign = 'center';
+	$G.gfx.context.strokeStyle = 'black';
+
 	player_hand_sprite = new $G.animation.sprite(0, 0, 57, 57, 6, 5);
 	level_sprite = new $G.animation.sprite(0, 0, 60, 60, 1, 1);
-	enemy_sprite = new $G.animation.sprite(0, 0, 50, 67, 8, 5);
+	enemy_sprite =
 
 	socket = io();
 

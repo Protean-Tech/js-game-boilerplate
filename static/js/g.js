@@ -260,8 +260,8 @@ var $G = {
 					this.context.msImageSmoothingEnabled     = false;
 					this.context.imageSmoothingEnabled       = false;
 
-					$G.canvas.width  = 60;
-					$G.canvas.height = 60;
+					$G.canvas.width  = 120;
+					$G.canvas.height = 120;
 				}
 				else{
 					// TODO error
