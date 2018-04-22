@@ -254,6 +254,7 @@ var $G = {
 				// Do canvas things...
 				if($G.canvas){
 					this.context = $G.canvas.getContext('2d');
+					this.context.imageSmoothingQuality       = "low";
 					this.context.mozImageSmoothingEnabled    = false;
 					this.context.webkitImageSmoothingEnabled = false;
 					this.context.msImageSmoothingEnabled     = false;

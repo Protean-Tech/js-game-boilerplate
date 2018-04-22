@@ -56,18 +56,19 @@ function loop(){
 		ctx.restore();
 
 		ctx.fillStyle   = '#0F0';
+		ctx.textAlign = 'center';
 		ctx.strokeStyle = 'black';
 
 		ctx.save();
-		ctx.transVec([15 * inv_aspect, 3]);
+		ctx.transVec([15 * inv_aspect, 4 + Math.cos(time * 2)]);
 		player_hand_sprite.draw(assets.images['Player_sheet.png'], 1, 0, 0);
 		ctx.restore();
 
 		dir_labels = {
-			'lft': { text:'LFT', pos: [1, 12] },
-			'fwd': { text:'FWD', pos: [20, 5] },
-			'rht': { text:'RHT', pos: [41, 12] },
-			'bck': { text:'BCK', pos: [20, 50] },
+			'lft': { text:'LFT', pos: [8, 12] },
+			'fwd': { text:'FWD', pos: [30, 5] },
+			'rht': { text:'RHT', pos: [50, 12] },
+			'bck': { text:'BCK', pos: [30, 50] },
 		};
 
 		for (var dir in dir_table) {
