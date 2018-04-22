@@ -217,8 +217,9 @@ var $G = {
 			var ctx = $G.gfx.context;
 			var t = this;
 
-			t.Time = 0; // current time (ms)
-			t._df =  1 / fps; // ms per frame
+			t.loop = true;
+			t.time = 0; // current time (ms)
+			t._df =  1 / fps; // seconds per frame
 
 			t._w = width; t._h = height; t._x = x; t._y = y;
 			t._frames = frameCount;
@@ -240,6 +241,10 @@ var $G = {
 						y: y + hh
 					}
 				};
+			}
+
+			t.atEnd = function() {
+				return parseInt(t.time / t._df) >= t._frames;
 			}
 		}
 	},
@@ -277,13 +282,21 @@ var $G = {
 			drawSprite: function(img, scale, dt, frameIndex){
 				var t = this;
 				var reset = false;
-				t.Time += dt;
-				var fi = frameIndex || Math.floor(t.Time / t._df); // frame index
+
+				var fi = frameIndex || Math.floor(t.time / t._df); // frame index
 
 				// do we need to go back to the first frame
 				if(fi >= t._frames){
-					fi = 0; t.Time = 0;
-					reset = true;
+					if (t.loop) {
+						fi = 0; t.time = 0;
+						reset = true;
+					}
+					else {
+						fi = t._frames - 1;
+					}
+				}
+				else {
+					t.time += dt;
 				}
 
 				// Draw the sprite

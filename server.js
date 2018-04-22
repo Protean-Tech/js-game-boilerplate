@@ -163,7 +163,13 @@ module.exports.Server = function(http, port, path) {
 		}
 
 		player.spawn = function() {
-			player.state.coord = level.room_coords.pick();
+			var coord = level.room_coords.pick();
+
+			for (var i = 3; room_live_occupants(coord).length && i--;) {
+				coord = level.room_coords.pick();
+			}
+
+			player.state.coord = coord;
 			console.log(player.state.coord);
 			player.state.direction = directions.pick();
 			player.state.health = 3;
@@ -171,7 +177,7 @@ module.exports.Server = function(http, port, path) {
 			refresh_whole_room(player.state.coord);
 		}
 
-		player.damage = function(amount) {
+		player.damage = function(amount, killer) {
 			var old_health = player.state.health;
 			player.state.health -= amount;
 
@@ -180,6 +186,8 @@ module.exports.Server = function(http, port, path) {
 				player.state.deaths += 1;
 
 				refresh_whole_room(player.state.coord);
+
+				player.send(new Event('died', killer));
 
 				return true;
 			}
@@ -216,6 +224,11 @@ module.exports.Server = function(http, port, path) {
 				// accept commands here
 				var cmd = message.command.trim().toLowerCase();
 				switch (cmd) {
+					case 'respawn':
+						if (player.state.health <= 0){
+							player.spawn();
+						}
+						break;
 					case 'north':
 					case 'south':
 					case 'west':
@@ -240,7 +253,7 @@ module.exports.Server = function(http, port, path) {
 							console.log(occupant);
 							if (cmd == occupant.name) {
 								player.send(new Event('damaged', occupant.id));
-								if (players[occupant.id].damage(1)) {
+								if (players[occupant.id].damage(1, player.state)) {
 									broadcast(new Event('killed', player.state.name + ' killed ' + occupant.name));
 									player.state.kills += 1;
 									player.refresh_room();
