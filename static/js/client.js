@@ -15,9 +15,9 @@ var level_sprite = null;
 var dir_table = {};
 
 var img_for_dir = {
-	'left': 'wall_door_left.png',
-	'right': 'wall_door_right.png',
-	'forward': 'wall_door_front.png'
+	'lft': 'wall_door_left.png',
+	'rht': 'wall_door_right.png',
+	'fwd': 'wall_door_front.png'
 };
 
 var sprite_files = [
@@ -39,7 +39,8 @@ function loop(){
 
 	with($G) {
 		var ctx = gfx.context;
-		var inv_aspect = 1 / gfx.aspect();
+		var aspect = gfx.aspect();
+		var inv_aspect = 1 / aspect;
 		gfx.canvas.clear('#333');
 
 		ctx.save();
@@ -52,13 +53,33 @@ function loop(){
 				level_sprite.draw(assets.images[img], inv_aspect, 0, 0);
 			}
 		}
-
 		ctx.restore();
+
+		ctx.fillStyle   = '#0F0';
+		ctx.strokeStyle = 'black';
 
 		ctx.save();
 		ctx.transVec([15 * inv_aspect, 3]);
 		player_hand_sprite.draw(assets.images['Player_sheet.png'], 1, 0, 0);
 		ctx.restore();
+
+		dir_labels = {
+			'lft': { text:'LFT', pos: [1, 12] },
+			'fwd': { text:'FWD', pos: [20, 5] },
+			'rht': { text:'RHT', pos: [41, 12] },
+			'bck': { text:'BCK', pos: [20, 50] },
+		};
+
+		for (var dir in dir_table) {
+			label = dir_labels[dir];
+			if (dir_labels[dir]) {
+				ctx.save();
+				ctx.transVec(label.pos);
+				ctx.fillText(label.text, 1, aspect);
+				ctx.restore();
+			}
+		}
+
 	}
 }
 
@@ -66,13 +87,13 @@ function dir_from_heading(heading) {
 	var reltative = [];
 	switch (heading) {
 		case 'north':
-			return {'west': 'left', 'east':'right', 'north':'forward', 'south': 'back'};
+			return {'west': 'lft', 'east':'rht', 'north':'fwd', 'south': 'bck'};
 		case 'south':
-			return {'east': 'left', 'west':'right', 'south':'forward', 'north': 'back'};
+			return {'east': 'lft', 'west':'rht', 'south':'fwd', 'north': 'bck'};
 		case 'west':
-			return {'south': 'left',  'north':'right', 'west':'forward', 'east': 'back'};
+			return {'south': 'lft',  'north':'rht', 'west':'fwd', 'east': 'bck'};
 		case 'east':
-			return {'north': 'left',  'south':'right', 'east':'forward', 'west': 'back'};
+			return {'north': 'lft',  'south':'rht', 'east':'fwd', 'west': 'bck'};
 	}
 }
 
@@ -80,6 +101,7 @@ function start(){
 	command_box = document.getElementById('command_box');
 	$G.init(loop, 'canvas').gfx.canvas.init();
 
+	$G.gfx.context.font = '8px Arial';
 	$G.gfx.context.transVec = function(v){
 		this.translate(v[0], v[1]);
 	};
