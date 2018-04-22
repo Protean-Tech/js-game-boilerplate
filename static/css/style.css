@@ -18,7 +18,7 @@ canvas {
 	color: #00FF00;
 }
 
-html, body, canvas{
+html, body{
     margin: 0;
     padding: 0;
 	height: 100%;

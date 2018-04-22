@@ -246,6 +246,9 @@ var $G = {
 	//--- Graphics -------------------------------------------------------------
 	gfx: {
 		context: null,
+		aspect: function(){
+			return window.innerHeight / window.innerWidth;
+		},
 		canvas: {
 			init: function(){
 				// Do canvas things...
@@ -256,8 +259,8 @@ var $G = {
 					this.context.msImageSmoothingEnabled     = false;
 					this.context.imageSmoothingEnabled       = false;
 
-					$G.canvas.width  = window.innerWidth / 4;
-					$G.canvas.height = window.innerHeight / 4;
+					$G.canvas.width  = 60;
+					$G.canvas.height = 60;
 				}
 				else{
 					// TODO error
@@ -288,7 +291,7 @@ var $G = {
 					t._w, t._h,
 					0,
 					0,
-					t._w * scale, t._h * scale
+					t._w * scale * $G.gfx.aspect(), t._h * scale
 				);
 			}
 		}
