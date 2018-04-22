@@ -143,7 +143,6 @@ function loop(){
 			ctx.restore();
 
 			// enemy players
-			ctx.fillStyle = '#0F0';
 			for (var i = player_state.room_live_occupants.length; i--;) {
 				var enemy = player_state.room_live_occupants[i];
 				get_enemy_sprite(enemy).draw();
@@ -164,8 +163,12 @@ function loop(){
 			if (finished) {
 				player_shoot = false;
 			}
-
 			ctx.restore();
+
+			ctx.fillStyle = '#0F0';
+			for(var i = 0; i < player_state.health; ++i) {
+				ctx.fillRect(108, 113 - (i * 6), 10, 5);
+			}
 
 			dir_labels = {
 				'lft': { text:'LFT', pos: [16, 24] },
