@@ -57,6 +57,7 @@ function loop(){
 		}
 		ctx.restore();
 
+		if (player_state)
 		for (var i = player_state.room_live_occupants.length; i--;) {
 			ctx.save();
 			ctx.transVec([15, 4]);
@@ -118,7 +119,7 @@ function start(){
 
 	player_hand_sprite = new $G.animation.sprite(0, 0, 57, 57, 6, 5);
 	level_sprite = new $G.animation.sprite(0, 0, 60, 60, 1, 1);
-	enemy_sprite = new $G.animation.sprite(0, 0, 75, 75, 8, 5);
+	enemy_sprite = new $G.animation.sprite(0, 0, 50, 67, 8, 5);
 
 	socket = io();
 
