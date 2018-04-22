@@ -14,8 +14,6 @@ var player_shoot = false;
 var level_sprite = null;
 var enemy_sprite = null;
 
-var scoreboard = [];
-
 var dir_table = {};
 
 var enemy_sprites = {};
@@ -242,11 +240,24 @@ function start(){
 				$('#scoreboard').show();
 				break;
 			case 'respawned':
+				$('#winner').hide();
 				$('#scoreboard').hide();
 				break;
-			case 'scoreboard':
+			case 'winner':
 			{
-				scores = data.message;
+				winner = data.message;
+				var winner_banner = $('#winner');
+				winner_banner.show();
+				winner_banner.html('');
+				var winner_row = $('<tr></tr>');
+				winner_row.append($('<td></td>').text(winner.name + " wins!"));
+				winner_banner.append(winner_row);
+
+				$('#scoreboard').show();
+			}
+			break;
+			case 'scoreboard':
+				var scores = data.message;
 				var score_list = $('#scores');
 				score_list.html('');
 
@@ -254,13 +265,12 @@ function start(){
 					var score = scores[i];
 					var score_row = $('<tr></tr>');
 					score_row.append($('<td></td>').text(score.name))
-					         .append($('<td></td>').text(score.kills))
-					         .append($('<td></td>').text(score.deaths));
+							 .append($('<td></td>').text(score.kills))
+							 .append($('<td></td>').text(score.deaths));
 
 					score_list.append(score_row);
 				}
-			}
-
+				break;
 		}
 
 		console.log(data);

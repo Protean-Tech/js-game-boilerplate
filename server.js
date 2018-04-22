@@ -140,6 +140,12 @@ module.exports.Server = function(http, port, path) {
 		broadcast(new Event('scoreboard', player_list));
 	}
 
+	function restart() {
+		for (var id in players) {
+			players[id].reset();
+		}
+	}
+
 	io.on('connection', function connection(player) {
 		// get an unused random id
 		do {
@@ -162,6 +168,11 @@ module.exports.Server = function(http, port, path) {
 			room_dead_occupants: [],
 			response: "Enter your name to join."
 		};
+
+		player.reset = function() {
+			this.kills = this.deaths = 0;
+			this.spawn();
+		}
 
 		player.shallow_state = function() {
 			return {
@@ -263,12 +274,15 @@ module.exports.Server = function(http, port, path) {
 					{ // Player has moved
 						// console.log('moving');
 						var move = cmd;
-						// console.log(player.state.possible_moves);
+
 						var move_idx = directions.indexOf(move);
 						// console.log(move_idx);
-						if (move_idx > -1) {
+						if (move_idx > -1 && move == player.state.direction) {
 							player.state.coord[0] += direction_vecs[move_idx][0];
 							player.state.coord[1] += direction_vecs[move_idx][1];
+							player.state.direction = move;
+						}
+						else {
 							player.state.direction = move;
 						}
 					}
@@ -282,8 +296,18 @@ module.exports.Server = function(http, port, path) {
 								player.send(new Event('damaged', occupant.id));
 								if (players[occupant.id].damage(1, player.state)) {
 									player.state.kills += 1;
+
 									broadcast(new Event('killed', player.state.name + ' killed ' + occupant.name));
 									broadcast_scoreboard();
+
+									if (player.state.kills >= 1) {
+										broadcast(new Event('winner', player.shallow_state()));
+
+										setTimeout(function() {
+											restart();
+										}, 10000);
+									}
+
 									player.refresh_room();
 								}
 							}

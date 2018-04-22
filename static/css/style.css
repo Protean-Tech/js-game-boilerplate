@@ -41,14 +41,25 @@ input {
 table {
 	position: absolute;
 	width: 100%;
+	background-color: rgba(0, 0, 0, 0.4);
 }
 
 thead {
 	margin-bottom: 10px;
 }
 
-td {
+td, th {
 	text-align: center;
+	color: rgb(255, 173, 8);
+}
+
+#winner {
+	font-size: 40px;
+	height: 60px;
+}
+
+#scoreboard {
+	margin-top: 50px;
 }
 
 .disabled {
