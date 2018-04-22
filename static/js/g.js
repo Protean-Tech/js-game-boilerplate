@@ -276,12 +276,14 @@ var $G = {
 			},
 			drawSprite: function(img, scale, dt, frameIndex){
 				var t = this;
+				var reset = false;
 				t.Time += dt;
 				var fi = frameIndex || Math.floor(t.Time / t._df); // frame index
 
 				// do we need to go back to the first frame
 				if(fi >= t._frames){
 					fi = 0; t.Time = 0;
+					reset = true;
 				}
 
 				// Draw the sprite
@@ -294,6 +296,8 @@ var $G = {
 					0,
 					t._w * scale * $G.gfx.aspect(), t._h * scale
 				);
+
+				return reset;
 			}
 		}
 	},

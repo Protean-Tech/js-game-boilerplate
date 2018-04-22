@@ -10,6 +10,7 @@ var command_box = null;
 var player_state = null;
 
 var player_hand_sprite = null;
+var player_shoot = false;
 var level_sprite = null;
 var enemy_sprite = null;
 
@@ -73,30 +74,37 @@ function loop(){
 		var inv_aspect = 1 / aspect;
 		gfx.canvas.clear('#333');
 
-		ctx.save();
-		ctx.transVec([0, gfx.aspect() * 30 - 30]);
-		level_sprite.draw(assets.images['Level.png'], inv_aspect * 2, 0, 0);
-
-		for (var dir in dir_table) {
-			var img = img_for_dir[dir];
-			if (img) {
-				level_sprite.draw(assets.images[img], inv_aspect * 2, 0, 0);
-			}
-		}
-		ctx.restore();
-
-		ctx.fillStyle   = '#0F0';
-
 		if (player_state && player_state.health > 0)
 		{
+			// draw the level
+			ctx.save();
+			ctx.transVec([0, gfx.aspect() * 30 - 30]);
+			level_sprite.draw(assets.images['Level.png'], inv_aspect * 2, 0, 0);
+
+			for (var dir in dir_table) {
+				var img = img_for_dir[dir];
+				if (img) {
+					level_sprite.draw(assets.images[img], inv_aspect * 2, 0, 0);
+				}
+			}
+			ctx.restore();
+
+			// enemy players
+			ctx.fillStyle = '#0F0';
 			for (var i = player_state.room_live_occupants.length; i--;) {
 				var enemy = player_state.room_live_occupants[i];
 				(new Player(enemy)).draw();
 			}
 
+			// player hand
 			ctx.save();
 			ctx.transVec([30 * inv_aspect, 8 + Math.cos(time * 2)]);
-			player_hand_sprite.draw(assets.images['Player_sheet.png'], 2, 0, 0);
+			var finished = player_hand_sprite.draw(assets.images['Player_sheet.png'], 2, player_shoot ? 0.05 : 0, 0);
+
+			if (finished) {
+				player_shoot = false;
+			}
+
 			ctx.restore();
 
 			dir_labels = {
@@ -173,6 +181,11 @@ function start(){
 						}
 					})
 				}
+			}
+			break;
+			case 'damaged':
+			{
+				player_shoot = true;
 			}
 			break;
 		}

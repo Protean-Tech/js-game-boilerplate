@@ -166,7 +166,7 @@ module.exports.Server = function(http, port, path) {
 			player.state.coord = level.room_coords.pick();
 			console.log(player.state.coord);
 			player.state.direction = directions.pick();
-			player.state.health = 1;
+			player.state.health = 3;
 
 			refresh_whole_room(player.state.coord);
 		}
@@ -234,10 +234,13 @@ module.exports.Server = function(http, port, path) {
 					}
 						break;
 					default:
+						console.log('shooting');
 						// check to see if they typed any character names
 						room_live_occupants(player.state.coord).forEach(function(occupant) {
-							if (player.state.command === occupant.name) {
-								if (occupant.damage(1)) {
+							console.log(occupant);
+							if (cmd == occupant.name) {
+								player.send(new Event('damaged', occupant.id));
+								if (players[occupant.id].damage(1)) {
 									broadcast(new Event('killed', player.state.name + ' killed ' + occupant.name));
 									player.state.kills += 1;
 									player.refresh_room();
