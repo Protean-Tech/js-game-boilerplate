@@ -135,7 +135,7 @@ module.exports.Server = function(http, port, path) {
 
 		player.state = {
 			type: 'state',
-			coord: null,
+			coord: [-1, -1],
 			health: 0,
 			name: null,
 			kills: 0,
