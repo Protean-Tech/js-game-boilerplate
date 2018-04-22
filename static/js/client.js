@@ -30,7 +30,10 @@ var sprite_files = [
 	'wall_door_right.png',
 	'Level.png',
 	'Player_sheet.png',
-	'BadGuy_fade.png'
+	'BadGuy_fade.png',
+	'junk_0.png',
+	'junk_1.png',
+	'junk_2.png'
 ];
 
 $G.assets.images("imgs/").load(sprite_files, function(){
@@ -109,6 +112,16 @@ function loop(){
 					level_sprite.draw(assets.images[img], inv_aspect, 0, 0);
 				}
 			}
+
+			var state = player_state.room_state;
+			for (var i = 3; i--;) {
+				var img = assets.images['junk_' + i + '.png'];
+				if (state & 0x01) {
+					level_sprite.draw(img, inv_aspect, 0, 0);
+				}
+				state >>= 1;
+			}
+
 			ctx.restore();
 
 			// enemy players

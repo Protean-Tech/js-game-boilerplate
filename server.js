@@ -39,11 +39,11 @@ function Level(path) {
 		var rooms = []
 		for (var i = 0; i < col.length; ++i) {
 			if (col[i] == ' ') {
-				rooms.push(false);
+				rooms.push(null);
 			}
 			else {
+				rooms.push(room_coords.length);
 				room_coords.push([ci, i]);
-				rooms.push(true);
 			}
 		}
 
@@ -61,7 +61,7 @@ function Level(path) {
 		directions.forEach(function(dir, i) {
 			let vec = direction_vecs[i];
 			if (map[r + vec[0]] != undefined)
-			if (map[r + vec[0]][c + vec[1]] == true) {
+			if (map[r + vec[0]][c + vec[1]] != null) {
 				possible_moves.push(dir);
 			}
 		});
@@ -144,6 +144,7 @@ module.exports.Server = function(http, port, path) {
 			deaths: 0,
 			direction: null,
 			possible_moves: [],
+			room_state: 0,
 			room_live_occupants: [],
 			room_dead_occupants: [],
 			response: "Enter your name to join."
@@ -196,9 +197,11 @@ module.exports.Server = function(http, port, path) {
 		}
 
 		player.refresh_room = function() {
+			var coord = player.state.coord;
 			player.state.room_live_occupants = room_live_occupants(player.state.coord, player.player_id);
 			player.state.room_dead_occupants = room_dead_occupants(player.state.coord, player.player_id);
-			player.state.possible_moves = level.possible_moves(player.state.coord);
+			player.state.possible_moves = level.possible_moves(coord);
+			player.state.room_state = level[coord[0]][coord[1]];
 
 			player.send(player.state);
 		}
