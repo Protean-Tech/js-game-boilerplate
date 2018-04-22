@@ -191,13 +191,17 @@ var $G = {
 			t._sounds = [];
 			t.Volume = 1.0;
 
-			for(var i = size; i--;) t._sounds.push(new Audio(url));
+			for(var i = size; i--;) {
+				var snd = new Audio(url);
+				snd.load();
+				t._sounds.push(snd);
+			}
 
-			t.Loop = function(value){
+			t.loop = function(value){
 				t._sounds[t._last].loop = value;
 			}
 
-			t.Play = function(){
+			t.play = function(){
 				if(!$G_MUTED){
 					var s = t._sounds[t._last = t._ptr];
 					s.volume = $G_VOLUME * t.Volume;
@@ -206,7 +210,7 @@ var $G = {
 				}
 			}
 
-			t.Pause = function(){
+			t.pause = function(){
 				t._sounds[t._last].pause();
 			}
 		}

@@ -18,6 +18,8 @@ var dir_table = {};
 
 var enemy_sprites = {};
 
+var theme_song = null;
+
 var img_for_dir = {
 	'lft': 'wall_door_left.png',
 	'rht': 'wall_door_right.png',
@@ -33,12 +35,23 @@ var sprite_files = [
 	'BadGuy_fade.png',
 	'junk_0.png',
 	'junk_1.png',
-	'junk_2.png'
+	'junk_2.png',
+	'junk_3.png',
+	'junk_4.png',
+	'junk_5.png',
+	'junk_6.png',
+	'junk_7.png',
+	'junk_8.png',
+	'junk_9.png'
 ];
 
 $G.assets.images("imgs/").load(sprite_files, function(){
+	theme_song = new $G.audio.soundBatch('/sound/song.ogg', 1);
+	theme_song.loop(true);
+	theme_song.play();
 	start();
 });
+
 
 function Player(state) {
 	var t = this;
@@ -57,18 +70,23 @@ function Player(state) {
 
 			if (t.sprite.atEnd()) return;
 
-			ctx.font = '10px Arial';
+			ctx.save();
+			ctx.transVec([28 + x, 24]);
+			t.sprite.draw(assets.images['BadGuy_fade.png'], inv_aspect, t.state.health > 0 ? 0 : 0.05, 0);
+			ctx.restore();
+
+			ctx.font = '10px monospace';
 			ctx.fillStyle   = '#0F0';
 			ctx.strokeStyle = '#000';
 			ctx.save();
 			ctx.transVec([49 + x, 24]);
 			ctx.strokeText(t.state.name, 1, 1);
 			ctx.fillText(t.state.name, 1, 1);
-			ctx.restore();
 
-			ctx.save();
-			ctx.transVec([28 + x, 24]);
-			t.sprite.draw(assets.images['BadGuy_fade.png'], inv_aspect, t.state.health > 0 ? 0 : 0.05, 0);
+			ctx.fillStyle   = '#F00';
+			ctx.transVec([0, 50]);
+			ctx.strokeText(t.state.typing, 1, 1);
+			ctx.fillText(t.state.typing, 1, 1);
 			ctx.restore();
 		}
 	};
@@ -114,7 +132,7 @@ function loop(){
 			}
 
 			var state = player_state.room_state;
-			for (var i = 3; i--;) {
+			for (var i = 10; i--;) {
 				var img = assets.images['junk_' + i + '.png'];
 				if (state & 0x01) {
 					level_sprite.draw(img, inv_aspect, 0, 0);
@@ -225,30 +243,65 @@ function start(){
 			}
 			break;
 			case 'damaged':
-			{
 				player_shoot = true;
+				break;
+			case 'died':
+				command_box.placeholder = 'Ready? Type "respawn"!';
+				$('#scoreboard').show();
+				break;
+			case 'respawned':
+				$('#winner').hide();
+				$('#scoreboard').hide();
+				break;
+			case 'winner':
+			{
+				winner = data.message;
+				var winner_banner = $('#winner');
+				winner_banner.show();
+				winner_banner.html('');
+				var winner_row = $('<tr></tr>');
+				winner_row.append($('<td></td>').text(winner.name + " wins!"));
+				winner_banner.append(winner_row);
+
+				$('#scoreboard').show();
 			}
 			break;
-			case 'died':
-			{
-				command_box.placeholder = 'Ready? Type "respawn"!';
-			}
+			case 'scoreboard':
+				var scores = data.message;
+				var score_list = $('#scores');
+				score_list.html('');
+
+				for (var i = 0; i < scores.length; ++i) {
+					var score = scores[i];
+					var score_row = $('<tr></tr>');
+					score_row.append($('<td></td>').text(score.name))
+							 .append($('<td></td>').text(score.kills))
+							 .append($('<td></td>').text(score.deaths));
+
+					score_list.append(score_row);
+				}
+				break;
 		}
 
 		console.log(data);
 	});
 
 	command_box.addEventListener('keypress', function(e) {
+		var cmd = command_box.value.trim();
+
+		player_state.typing = cmd + e.key + '_';
+
 		if (e.keyCode == 13 && player_state) {
-			var cmd = player_state.command = command_box.value.trim();
+			player_state.command = cmd;
 
 			if (cmd in dir_table) {
 				cmd = player_state.command = dir_table[cmd]
 			}
 
 			command_box.value = '';
-
-			socket.send(player_state);
+			player_state.typing = '';
 		}
+
+		socket.send(player_state);
 	});
 }

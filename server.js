@@ -1,5 +1,12 @@
 var fs = require('fs');
 
+const KILLS_TO_WIN = 1;
+
+function Event(type, message) {
+	this.type = type;
+	this.message = message;
+}
+
 Array.prototype.pick = function() {
 	return this[Math.floor(Math.random() * this.length)];
 }
@@ -74,10 +81,6 @@ function Level(path) {
 	return map;
 }
 
-function Event(type, message) {
-	this.type = type;
-	this.message = message;
-}
 
 module.exports.Server = function(http, port, path) {
 
@@ -113,7 +116,6 @@ module.exports.Server = function(http, port, path) {
 
 	function refresh_whole_room(coord) {
 		for (var id in players) {
-			console.log(id);
 			players[id].refresh_room();
 		}
 	}
@@ -124,6 +126,25 @@ module.exports.Server = function(http, port, path) {
 			for (var id in players) {
 				players[id].send(event);
 			}
+		}
+	}
+
+	function broadcast_scoreboard() {
+		player_list = []
+		for (var id in players) {
+			player_list.push(players[id].shallow_state());
+		}
+
+		player_list.sort(function(a, b) {
+			return (b.kills - b.deaths) - (a.kills - a.deaths);
+		});
+
+		broadcast(new Event('scoreboard', player_list));
+	}
+
+	function restart() {
+		for (var id in players) {
+			players[id].reset();
 		}
 	}
 
@@ -143,12 +164,21 @@ module.exports.Server = function(http, port, path) {
 			kills: 0,
 			deaths: 0,
 			direction: null,
+			typing: '',
 			possible_moves: [],
 			room_state: 0,
 			room_live_occupants: [],
 			room_dead_occupants: [],
 			response: "Enter your name to join."
 		};
+
+		player.reset = function() {
+			player.state.kills = 0;
+			player.state.deaths = 0;
+			player.state.command = '';
+			player.state.typing = '';
+			this.spawn();
+		}
 
 		player.shallow_state = function() {
 			return {
@@ -159,7 +189,8 @@ module.exports.Server = function(http, port, path) {
 				name: player.state.name,
 				kills: player.state.kills,
 				deaths: player.state.deaths,
-				direction: player.state.direction
+				direction: player.state.direction,
+				typing: player.state.typing
 			};
 		}
 
@@ -171,11 +202,12 @@ module.exports.Server = function(http, port, path) {
 			}
 
 			player.state.coord = coord;
-			console.log(player.state.coord);
+			player.state.typing = '';
 			player.state.direction = directions.pick();
 			player.state.health = 3;
 
 			refresh_whole_room(player.state.coord);
+			player.send(new Event('respawned'));
 		}
 
 		player.damage = function(amount, killer) {
@@ -201,23 +233,34 @@ module.exports.Server = function(http, port, path) {
 			player.state.room_live_occupants = room_live_occupants(player.state.coord, player.player_id);
 			player.state.room_dead_occupants = room_dead_occupants(player.state.coord, player.player_id);
 			player.state.possible_moves = level.possible_moves(coord);
-			player.state.room_state = level[coord[0]][coord[1]];
+
+			if (!coord.sameAs([-1, -1])) {
+				player.state.room_state = level[coord[0]][coord[1]];
+			}
 
 			player.send(player.state);
 		}
 
 		player.on('message', function incoming(message) {
 			player.state.response = "";
+			player.state.typing = message.typing;
 			console.log(message)
 
 			if (player.state.name == null && typeof(message.command) === 'string') {
 				// Player has set their name, get read to spawn them
 				var proposed_name = message.command.toLowerCase();
-				console.log(proposed_name);
+
 				if (proposed_name.isAlpha()){
-					player.state.name = proposed_name;
-					player.spawn();
-					broadcast(new Event('joined', player.state.name + ' has joined the game'));
+
+					if (proposed_name.length != 7) {
+						player.state.response = "Please enter a 7 character long name!";
+					}
+					else{
+						player.state.name = proposed_name;
+						player.spawn();
+						broadcast(new Event('joined', player.state.name + ' has joined the game'));
+						broadcast_scoreboard();
+					}
 				}
 				else {
 					player.state.response = "Please enter a different name, letters only";
@@ -237,28 +280,38 @@ module.exports.Server = function(http, port, path) {
 					case 'west':
 					case 'east':
 					{ // Player has moved
-						// console.log('moving');
 						var move = cmd;
-						// console.log(player.state.possible_moves);
+
 						var move_idx = directions.indexOf(move);
-						// console.log(move_idx);
-						if (move_idx > -1) {
+						if (move_idx > -1 && move == player.state.direction) {
 							player.state.coord[0] += direction_vecs[move_idx][0];
 							player.state.coord[1] += direction_vecs[move_idx][1];
+							player.state.direction = move;
+						}
+						else {
 							player.state.direction = move;
 						}
 					}
 						break;
 					default:
-						console.log('shooting');
 						// check to see if they typed any character names
 						room_live_occupants(player.state.coord).forEach(function(occupant) {
-							console.log(occupant);
 							if (cmd == occupant.name) {
 								player.send(new Event('damaged', occupant.id));
 								if (players[occupant.id].damage(1, player.state)) {
-									broadcast(new Event('killed', player.state.name + ' killed ' + occupant.name));
 									player.state.kills += 1;
+
+									broadcast(new Event('killed', player.state.name + ' killed ' + occupant.name));
+									broadcast_scoreboard();
+
+									if (player.state.kills >= KILLS_TO_WIN) {
+										broadcast(new Event('winner', player.shallow_state()));
+
+										setTimeout(function() {
+											restart();
+										}, 10000);
+									}
+
 									player.refresh_room();
 								}
 							}
@@ -272,12 +325,12 @@ module.exports.Server = function(http, port, path) {
 		});
 
 		player.on('disconnect', function() {
-			console.log('disconnect');
 			broadcast(new Event('quit', player.state.name + ' has quit the game'));
 
 			var coord = player.state.coord;
 			delete players[player.player_id];
 
+			broadcast_scoreboard();
 			refresh_whole_room(coord);
 		});
 
