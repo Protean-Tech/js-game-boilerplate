@@ -87,9 +87,10 @@ module.exports.Server = function(http, port, path) {
 
 	console.log('server started');
 
-	function room_live_occupants(coord) {
+	function room_live_occupants(coord, exclude_id) {
 		var occupants = [];
 		for (var id in players) {
+			if (id == exclude_id) continue;
 			if (players[id].state.health <= 0) continue;
 			if (!players[id].state.coord.sameAs(coord)) continue;
 			occupants.push(players[id].shallow_state());
@@ -98,9 +99,10 @@ module.exports.Server = function(http, port, path) {
 		return occupants;
 	}
 
-	function room_dead_occupants(coord) {
+	function room_dead_occupants(coord, exclude_id) {
 		var occupants = [];
 		for (var id in players) {
+			if (id == exclude_id) continue;
 			if (players[id].state.health > 0) continue;
 			if (!players[id].state.coord.sameAs(coord)) continue;
 			occupants.push(players[id].shallow_state());
@@ -186,8 +188,8 @@ module.exports.Server = function(http, port, path) {
 		}
 
 		player.refresh_room = function() {
-			player.state.room_live_occupants = room_live_occupants(player.state.coord);
-			player.state.room_dead_occupants = room_dead_occupants(player.state.coord);
+			player.state.room_live_occupants = room_live_occupants(player.state.coord, player.player_id);
+			player.state.room_dead_occupants = room_dead_occupants(player.state.coord, player.player_id);
 			player.state.possible_moves = level.possible_moves(player.state.coord);
 
 			player.send(player.state);

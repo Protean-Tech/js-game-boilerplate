@@ -11,6 +11,7 @@ var player_state = null;
 
 var player_hand_sprite = null;
 var level_sprite = null;
+var enemy_sprite = null;
 
 var dir_table = {};
 
@@ -25,7 +26,8 @@ var sprite_files = [
 	'wall_door_left.png',
 	'wall_door_right.png',
 	'Level.png',
-	'Player_sheet.png'
+	'Player_sheet.png',
+	'BadGuy_fade.png'
 ];
 
 $G.assets.images("imgs/").load(sprite_files, function(){
@@ -55,9 +57,12 @@ function loop(){
 		}
 		ctx.restore();
 
-		ctx.fillStyle   = '#0F0';
-		ctx.textAlign = 'center';
-		ctx.strokeStyle = 'black';
+		for (var i = player_state.room_live_occupants.length; i--;) {
+			ctx.save();
+			ctx.transVec([15, 4]);
+			enemy_sprite.draw(assets.images['BadGuy_fade.png'], 1, 0, 0);
+			ctx.restore();
+		}
 
 		ctx.save();
 		ctx.transVec([15 * inv_aspect, 4 + Math.cos(time * 2)]);
@@ -70,6 +75,10 @@ function loop(){
 			'rht': { text:'RHT', pos: [50, 12] },
 			'bck': { text:'BCK', pos: [30, 50] },
 		};
+
+		ctx.fillStyle   = '#0F0';
+		ctx.textAlign = 'center';
+		ctx.strokeStyle = 'black';
 
 		for (var dir in dir_table) {
 			label = dir_labels[dir];
@@ -109,6 +118,7 @@ function start(){
 
 	player_hand_sprite = new $G.animation.sprite(0, 0, 57, 57, 6, 5);
 	level_sprite = new $G.animation.sprite(0, 0, 60, 60, 1, 1);
+	enemy_sprite = new $G.animation.sprite(0, 0, 75, 75, 8, 5);
 
 	socket = io();
 
@@ -154,24 +164,4 @@ function start(){
 			socket.send(player_state);
 		}
 	});
-
-	lastTouchPos = $V([$G.canvas.width / 2, $G.canvas.height / 2]);
-
-	var move = function(e){
-		var t = e.pageX ? e : e.touches[0];
-
-		var x = $G.canvas.width * t.pageX / window.innerWidth;
-		var y = $G.canvas.height * t.pageY / window.innerHeight;
-
-		lastTouchPos = $V([x, y]);
-	};
-
-	var begin = function(e){
-
-	};
-
-	$G.input.touch.setStart(begin);
-	$G.input.touch.setMove(move);
-	$G.input.mouse.setClick(begin);
-	$G.input.mouse.setMove(move);
 }
