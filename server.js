@@ -1,6 +1,6 @@
 var fs = require('fs');
 
-const KILLS_TO_WIN = 1;
+const KILLS_TO_WIN = 10;
 
 function Event(type, message) {
 	this.type = type;
@@ -312,7 +312,7 @@ module.exports.Server = function(http, port, path) {
 					if (proposed_name.length != 7) {
 						player.state.response = "Please enter a 7 character long name!";
 					}
-					if (name_in_use(proposed_name)) {
+					else if (name_in_use(proposed_name)) {
 						player.state.response = "Name '" + proposed_name + "' is taken!";
 					}
 					else{
@@ -356,7 +356,9 @@ module.exports.Server = function(http, port, path) {
 					default:
 						// check to see if they typed any character names
 						room_live_occupants(player.state.coord).forEach(function(occupant) {
-							if (cmd == occupant.name && cmd != player.state.name) {
+							if (occupant.id == player.id) return;
+
+							if (cmd == occupant.name) {
 								player.send(new Event('damaged', occupant.id));
 								if (players[occupant.id].damage(1, player.state)) {
 
