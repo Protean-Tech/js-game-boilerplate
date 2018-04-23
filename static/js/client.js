@@ -62,7 +62,7 @@ function Player(state) {
 	t.state = state;
 	t.sprite.loop = false;
 
-	t.draw = function() {
+	t.draw = function(y) {
 		with($G) {
 			var x = t.state.id / 500;
 			var ctx = gfx.context;
@@ -77,7 +77,7 @@ function Player(state) {
 			if (t.sprite.atEnd()) return;
 
 			ctx.save();
-			ctx.transVec([28 + x, 24]);
+			ctx.transVec([28 + x, 24 + y]);
 			t.sprite.draw(img, inv_aspect, t.state.health > 0 ? 0 : 0.05, 0);
 			ctx.restore();
 
@@ -85,7 +85,7 @@ function Player(state) {
 			ctx.fillStyle   = '#0F0';
 			ctx.strokeStyle = '#000';
 			ctx.save();
-			ctx.transVec([49 + x, 24]);
+			ctx.transVec([49 + x, 24 + y]);
 
 			if (t.state.name == 'heal') {
 				ctx.transVec([7, 30]);
@@ -95,7 +95,7 @@ function Player(state) {
 			ctx.fillText(t.state.name, 1, 1);
 
 			ctx.fillStyle   = '#F00';
-			ctx.transVec([0, 50]);
+			ctx.transVec([0, 50 + y]);
 			ctx.strokeText(t.state.typing, 1, 1);
 			ctx.fillText(t.state.typing, 1, 1);
 			ctx.restore();
@@ -154,14 +154,14 @@ function loop(){
 			ctx.restore();
 
 			// enemy players
-			for (var i = player_state.room_live_occupants.length; i--;) {
+			for (var i = 0; i < player_state.room_live_occupants.length; ++i) {
 				var enemy = player_state.room_live_occupants[i];
-				get_enemy_sprite(enemy).draw();
+				get_enemy_sprite(enemy).draw(i * 7);
 			}
 
-			for (var i = player_state.room_dead_occupants.length; i--;) {
+			for (var i = 0; i < player_state.room_dead_occupants.length; ++i) {
 				var enemy = player_state.room_dead_occupants[i];
-				if(get_enemy_sprite(enemy).draw()) {
+				if(get_enemy_sprite(enemy).draw(i * 7)) {
 					player_state.room_dead_occupants.unshift()
 				}
 			}
