@@ -86,7 +86,49 @@ module.exports.Server = function(http, port, path) {
 
 	var io = require('socket.io')(http);
 	var level = Level(path);
-	var players = {};
+	var players = {
+		1337: {
+			state: {
+				type: 'state',
+				id: 1337,
+				coord: [-1, -1],
+				health: 1,
+				name: 'heal',
+				typing: ''
+			},
+			shallow_state: function() {
+				return this.state;
+			},
+			spawn: function() {
+				var coord = level.room_coords.pick();
+
+				for (var i = 3; room_live_occupants(coord).length && i--;) {
+					coord = level.room_coords.pick();
+				}
+
+				this.state.coord = coord;
+				this.state.health = 1;
+
+				refresh_whole_room(this.state.coord);
+			},
+			damage: function(amount, killer) {
+				var old_health = this.state.health;
+				this.state.health -= amount;
+
+				if (this.state.health <= 0 && old_health > 0) {
+					setTimeout(function() {
+						players[1337].spawn();
+					}, 10000);
+
+					return true;
+				}
+
+				return false;
+			}
+		}
+	};
+
+	players[1337].spawn();
 
 	console.log('server started');
 
@@ -124,6 +166,7 @@ module.exports.Server = function(http, port, path) {
 
 	function refresh_whole_room(coord) {
 		for (var id in players) {
+			if (!players[id].refresh_room) continue;
 			players[id].refresh_room();
 		}
 	}
@@ -132,6 +175,8 @@ module.exports.Server = function(http, port, path) {
 		if (event instanceof Event) {
 			console.log('[' + event.type + '] ' + event.message);
 			for (var id in players) {
+				console.log(id);
+				if (!players[id].send) continue;
 				players[id].send(event);
 			}
 		}
@@ -210,13 +255,13 @@ module.exports.Server = function(http, port, path) {
 				coord = level.room_coords.pick();
 			}
 
-			player.state.coord = coord;
-			player.state.typing = '';
-			player.state.direction = directions.pick();
-			player.state.health = 3;
+			this.state.coord = coord;
+			this.state.typing = '';
+			this.state.direction = directions.pick();
+			this.state.health = 3;
 
-			refresh_whole_room(player.state.coord);
-			player.send(new Event('respawned'));
+			refresh_whole_room(this.state.coord);
+			this.send(new Event('respawned'));
 		}
 
 		player.damage = function(amount, killer) {
@@ -229,7 +274,9 @@ module.exports.Server = function(http, port, path) {
 
 				refresh_whole_room(player.state.coord);
 
-				player.send(new Event('died', killer));
+				if (player.send) {
+					player.send(new Event('died', killer));
+				}
 
 				return true;
 			}
@@ -310,21 +357,32 @@ module.exports.Server = function(http, port, path) {
 						room_live_occupants(player.state.coord).forEach(function(occupant) {
 							if (cmd == occupant.name && cmd != player.state.name) {
 								player.send(new Event('damaged', occupant.id));
+								console.log('>>>' + JSON.stringify(occupant));
 								if (players[occupant.id].damage(1, player.state)) {
-									player.state.kills += 1;
 
-									broadcast(new Event('killed', player.state.name + ' killed ' + occupant.name));
-									broadcast_scoreboard();
+									if (occupant.name == 'heal') {
+										player.state.health += 1;
+										if (player.state.health > 3) {
+											player.state.health = 3;
+										}
+									}
+									else {
+										player.state.kills += 1;
+										broadcast(new Event('killed', player.state.name + ' killed ' + occupant.name));
+										broadcast_scoreboard();
 
-									if (player.state.kills >= KILLS_TO_WIN) {
-										broadcast(new Event('winner', player.shallow_state()));
+										if (player.state.kills >= KILLS_TO_WIN) {
+											broadcast(new Event('winner', player.shallow_state()));
 
-										setTimeout(function() {
-											restart();
-										}, 10000);
+											setTimeout(function() {
+												restart();
+											}, 10000);
+										}
 									}
 
-									player.refresh_room();
+									if (player.refresh_room) {
+										player.refresh_room();
+									}
 								}
 							}
 						});

@@ -311,7 +311,7 @@ var $G = {
 					t._w, t._h,
 					0,
 					0,
-					t._w * scale * $G.gfx.aspect(), t._h * scale
+					t._w * scale, t._h * scale
 				);
 
 				return reset;

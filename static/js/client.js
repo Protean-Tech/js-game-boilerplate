@@ -33,6 +33,7 @@ var sprite_files = [
 	'Level.png',
 	'Player_sheet.png',
 	'BadGuy_fade.png',
+	'health.png',
 	'junk_0.png',
 	'junk_1.png',
 	'junk_2.png',
@@ -65,14 +66,19 @@ function Player(state) {
 		with($G) {
 			var x = t.state.id / 500;
 			var ctx = gfx.context;
-			var aspect = gfx.aspect();
+			var aspect = 1;//gfx.aspect();
 			var inv_aspect = 1 / aspect;
+			var img = assets.images['BadGuy_fade.png'];
+
+			if (t.state.name == 'heal') {
+				img = assets.images['health.png'];
+			}
 
 			if (t.sprite.atEnd()) return;
 
 			ctx.save();
 			ctx.transVec([28 + x, 24]);
-			t.sprite.draw(assets.images['BadGuy_fade.png'], inv_aspect, t.state.health > 0 ? 0 : 0.05, 0);
+			t.sprite.draw(img, inv_aspect, t.state.health > 0 ? 0 : 0.05, 0);
 			ctx.restore();
 
 			ctx.font = '10px monospace';
@@ -113,7 +119,7 @@ function loop(){
 
 	with($G) {
 		var ctx = gfx.context;
-		var aspect = gfx.aspect();
+		var aspect = 1;//gfx.aspect();
 		var inv_aspect = 1 / aspect;
 		gfx.canvas.clear('#333');
 
@@ -121,7 +127,7 @@ function loop(){
 		{
 			// draw the level
 			ctx.save();
-			ctx.transVec([0, gfx.aspect() * 30 - 30]);
+			ctx.transVec([0, aspect * 30 - 30]);
 			level_sprite.draw(assets.images['Level.png'], inv_aspect, 0, 0);
 
 			for (var dir in dir_table) {
