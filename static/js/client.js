@@ -60,7 +60,6 @@ function Player(state) {
 
 	t.sprite = new $G.animation.sprite(0, 0, 50, 67, 8, 5);
 	t.state = state;
-
 	t.sprite.loop = false;
 
 	t.draw = function() {
@@ -308,7 +307,7 @@ function start(){
 	});
 
 	command_box.addEventListener('keypress', function(e) {
-		var cmd = command_box.value.trim();
+		var cmd = command_box.value.toLowerCase().trim();
 
 		player_state.typing = cmd + e.key + '_';
 
