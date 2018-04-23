@@ -27,6 +27,7 @@ var img_for_dir = {
 };
 
 var sprite_files = [
+	'splash.png',
 	'wall_door_front.png',
 	'wall_door_left.png',
 	'wall_door_right.png',
@@ -86,6 +87,11 @@ function Player(state) {
 			ctx.strokeStyle = '#000';
 			ctx.save();
 			ctx.transVec([49 + x, 24]);
+
+			if (t.state.name == 'heal') {
+				ctx.transVec([7, 30]);
+			}
+
 			ctx.strokeText(t.state.name, 1, 1);
 			ctx.fillText(t.state.name, 1, 1);
 
@@ -192,6 +198,12 @@ function loop(){
 					ctx.restore();
 				}
 			}
+		}
+		else {
+			ctx.save();
+			ctx.transVec([0, 0]);
+			level_sprite.draw(assets.images['splash.png'], 1, 0, 0);
+			ctx.restore()
 		}
 	}
 }

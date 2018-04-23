@@ -96,6 +96,7 @@ module.exports.Server = function(http, port, path) {
 				name: 'heal',
 				typing: ''
 			},
+			reset: function() { },
 			shallow_state: function() {
 				return this.state;
 			},
@@ -175,7 +176,6 @@ module.exports.Server = function(http, port, path) {
 		if (event instanceof Event) {
 			console.log('[' + event.type + '] ' + event.message);
 			for (var id in players) {
-				console.log(id);
 				if (!players[id].send) continue;
 				players[id].send(event);
 			}
@@ -185,6 +185,7 @@ module.exports.Server = function(http, port, path) {
 	function broadcast_scoreboard() {
 		player_list = []
 		for (var id in players) {
+			if (players[id].state.name == 'heal') continue;
 			player_list.push(players[id].shallow_state());
 		}
 
@@ -300,7 +301,7 @@ module.exports.Server = function(http, port, path) {
 		player.on('message', function incoming(message) {
 			player.state.response = "";
 			player.state.typing = message.typing;
-			console.log(message)
+			// console.log(message)
 
 			if (player.state.name == null && typeof(message.command) === 'string') {
 				// Player has set their name, get read to spawn them
@@ -357,7 +358,6 @@ module.exports.Server = function(http, port, path) {
 						room_live_occupants(player.state.coord).forEach(function(occupant) {
 							if (cmd == occupant.name && cmd != player.state.name) {
 								player.send(new Event('damaged', occupant.id));
-								console.log('>>>' + JSON.stringify(occupant));
 								if (players[occupant.id].damage(1, player.state)) {
 
 									if (occupant.name == 'heal') {
@@ -390,7 +390,7 @@ module.exports.Server = function(http, port, path) {
 				}
 			}
 
-			console.log(player.state);
+			// console.log(player.state);
 			refresh_whole_room(player.state.coord);
 		});
 
